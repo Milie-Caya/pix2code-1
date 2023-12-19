@@ -2,11 +2,11 @@ from __future__ import print_function
 __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 
 import os
+import json
 
 from classes.Vocabulary import *
 from classes.Utils import *
 from classes.model.Config import *
-
 
 class Dataset:
     def __init__(self):
@@ -77,11 +77,24 @@ class Dataset:
         print("Input shape: {}".format(self.input_shape))
         print("Output size: {}".format(self.output_size))
 
-    def convert_arrays(self):
+    def convert_arrays(self, path, batch_size=32):
         print("Convert arrays...")
-        self.input_images = np.array(self.input_images)
-        self.partial_sequences = np.array(self.partial_sequences)
-        self.next_words = np.array(self.next_words)
+
+        num_samples = len(self.input_images)
+        num_batches = int(np.ceil(num_samples / batch_size))
+
+        for i in range(num_batches):
+            start_idx = i * batch_size
+            end_idx = min((i + 1) * batch_size, num_samples)
+
+            batch_input_images = np.array(self.input_images[start_idx:end_idx])
+            batch_partial_sequences = np.array(self.partial_sequences[start_idx:end_idx])
+            batch_next_words = np.array(self.next_words[start_idx:end_idx])
+
+            np.savez("{}/batch_{}".format(path, i), 
+                     input_images=batch_input_images,
+                     partial_sequences=batch_partial_sequences,
+                     next_words=batch_next_words)
 
     def append(self, sample_id, gui, img, to_show=False):
         if to_show:
@@ -141,4 +154,10 @@ class Dataset:
         return temp
 
     def save_metadata(self, path):
-        np.save("{}/meta_dataset".format(path), np.array([self.input_shape, self.output_size, self.size]))
+        metadata = {
+            'input_shape': self.input_shape,
+            'output_size': self.output_size,
+            'size': self.size
+        }
+        with open("{}/meta_dataset.json".format(path), 'w') as f:
+            json.dump(metadata, f)

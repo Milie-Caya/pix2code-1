@@ -34,12 +34,17 @@ for f in os.listdir(input_path):
             path_img = "{}/{}.png".format(input_path, file_name)
             paths.append(file_name)
 
-evaluation_samples_number = len(paths) / (distribution + 1)
-training_samples_number = evaluation_samples_number * distribution
+evaluation_samples_number = int(len(paths) / (distribution + 1))
+training_samples_number = len(paths) - evaluation_samples_number
+
+print("Number of paths:", len(paths))
+print("Training samples number:", training_samples_number)
+print("Evaluation samples number:", evaluation_samples_number)
 
 assert training_samples_number + evaluation_samples_number == len(paths)
 
 print("Splitting datasets, training samples: {}, evaluation samples: {}".format(training_samples_number, evaluation_samples_number))
+
 
 np.random.shuffle(paths)
 
@@ -65,7 +70,7 @@ for path in paths:
         else:
             is_unique = True
             for h in hashes:
-                if h is content_hash:
+                if h == content_hash:  # Correction ici
                     is_unique = False
                     break
 
@@ -75,6 +80,8 @@ for path in paths:
                 train_set.append(path)
 
         hashes.append(content_hash)
+
+print("Number of examples in eval_set:", len(eval_set))
 
 assert len(eval_set) == evaluation_samples_number
 assert len(train_set) == training_samples_number

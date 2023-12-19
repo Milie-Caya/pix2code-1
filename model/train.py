@@ -4,13 +4,9 @@ from __future__ import absolute_import
 __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 
 import tensorflow as tf
-sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-
-import sys
-
 from classes.dataset.Generator import *
 from classes.model.pix2code import *
-
+from classes.dataset.Dataset import Dataset
 
 def run(input_path, output_path, is_memory_intensive=False, pretrained_model=None):
     np.random.seed(1234)
@@ -21,7 +17,7 @@ def run(input_path, output_path, is_memory_intensive=False, pretrained_model=Non
     dataset.voc.save(output_path)
 
     if not is_memory_intensive:
-        dataset.convert_arrays()
+        dataset.convert_arrays(output_path)  # Convert arrays to batches
 
         input_shape = dataset.input_shape
         output_size = dataset.output_size
@@ -49,6 +45,9 @@ def run(input_path, output_path, is_memory_intensive=False, pretrained_model=Non
         model.fit(dataset.input_images, dataset.partial_sequences, dataset.next_words)
     else:
         model.fit_generator(generator, steps_per_epoch=steps_per_epoch)
+
+    # Convert arrays to batches
+    dataset.convert_arrays(batch_size=BATCH_SIZE)
 
 if __name__ == "__main__":
     argv = sys.argv[1:]
